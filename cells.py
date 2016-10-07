@@ -44,6 +44,7 @@ class ControlCell(Cell):
     def __init__(self, item):
         super().__init__(Landscape, item)
         self.item = item
+        self.setToolTip(item.__name__)
 
     def _clicked(self):
         Communication.control_button_clicked.emit(self.item)
