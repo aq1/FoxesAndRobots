@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QApplication, QGridLayout, QPushButton)
 
 import cells
+import field
 from communication import Communication
 
 
@@ -15,6 +16,9 @@ class Controls(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         layout.addLayout(self._get_cells_control())
+        tick_button = QPushButton('Tick')
+        tick_button.clicked.connect(Communication.tick.emit)
+        layout.addWidget(tick_button)
         layout.addStretch()
 
     def _get_cells_control(self):
@@ -28,26 +32,11 @@ class Controls(QWidget):
             except TypeError:
                 pass
 
+        b = QPushButton('x')
+        b.setFixedSize(20, 20)
+        b.clicked.connect(functools.partial(Communication.control_button_clicked.emit, None))
+        layout.addWidget(b)
         return layout
-
-
-class Field(QWidget):
-
-    WIDTH = 20
-    HEIGHT = 20
-
-    def replace_cell(self, i, j, cell):
-        pass
-
-    def __init__(self):
-        super().__init__()
-        self.layout = QGridLayout()
-        self.layout.setSpacing(0)
-        self.setLayout(self.layout)
-
-        for i in range(self.WIDTH):
-            for j in range(self.HEIGHT):
-                self.layout.addWidget(cells.Cell(cells.Field()), i, j)
 
 
 class MainWindow(QWidget):
@@ -58,7 +47,7 @@ class MainWindow(QWidget):
 
         layout = QHBoxLayout()
         self.setLayout(layout)
-        layout.addWidget(Field())
+        layout.addWidget(field.Field())
         layout.addWidget(Controls())
 
         Communication.control_button_clicked.connect(self._select_control_cell)
@@ -67,7 +56,11 @@ class MainWindow(QWidget):
         self.show()
 
     def _cell_clicked(self, cell):
-        if self.selected_cell:
+        if self.selected_cell is None:
+            cell.clear(full=False)
+        elif issubclass(self.selected_cell, cells.Landscape):
+            cell.set_landscape(self.selected_cell)
+        else:
             cell.set_citizen(self.selected_cell)
 
     def _select_control_cell(self, cell):

@@ -10,6 +10,7 @@ class Communication(QObject):
 
     control_button_clicked = pyqtSignal(object)
     cell_clicked = pyqtSignal(object)
+    tick = pyqtSignal()
 
 
 Communication = Communication()
