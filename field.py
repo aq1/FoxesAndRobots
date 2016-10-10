@@ -19,17 +19,19 @@ class Field(QWidget):
     def replace_cell(self, i, j, cell):
         pass
 
-    def _init(self):
-        utils.clear_layout(self.layout)
-        for i in range(self.WIDTH):
-            for j in range(self.HEIGHT):
-                self.layout.addWidget(cells.Cell(self, cells.Field(), (i, j)), i, j)
+    def _clear(self):
+        for cell in self.findChildren(cells.Cell):
+            cell.set_landscape(cells.Field)
+            cell.remove_citizen()
 
     def __init__(self):
         super().__init__()
 
-        Communication.clear_field.connect(self._init)
+        Communication.clear_field.connect(self._clear)
         self.layout = QGridLayout()
         self.layout.setSpacing(0)
         self.setLayout(self.layout)
-        self._init()
+        for i in range(self.WIDTH):
+            for j in range(self.HEIGHT):
+                self.layout.addWidget(cells.Cell(self, cells.Field(), (i, j)), i, j)
+        self._clear()
