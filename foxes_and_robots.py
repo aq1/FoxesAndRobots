@@ -1,8 +1,7 @@
 import sys
 import functools
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QApplication, QGridLayout, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QApplication, QPushButton)
 
 import cells
 import field
@@ -36,6 +35,11 @@ class Controls(QWidget):
         b.setFixedSize(20, 20)
         b.clicked.connect(functools.partial(Communication.control_button_clicked.emit, None))
         layout.addWidget(b)
+
+        b = QPushButton('Clear')
+        b.clicked.connect(Communication.clear_field.emit)
+        layout.addWidget(b)
+
         return layout
 
 
