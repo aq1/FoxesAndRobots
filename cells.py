@@ -20,7 +20,6 @@ class Cell(QPushButton):
         self.setFixedSize(20, 20)
         self.set_style()
         self.clicked.connect(self._clicked)
-        Communication.tick.connect(self.tick)
 
     def _clicked(self):
         Communication.cell_clicked.emit(self)
@@ -59,8 +58,16 @@ class Cell(QPushButton):
         if self.citizen:
             self.citizen.tick()
 
-    def is_occupied(self):
-        return self.citizen or not isinstance(self.landscape, Field)
+    def apply_tick(self):
+        if self.citizen:
+            self.citizen.apply_tick()
+
+    def is_occupied(self, future=False):
+        occupied = bool(self.citizen) or not isinstance(self.landscape, Field)
+        if not occupied and future:
+            return any([c.citizen.next_cell is self
+                        for c in self.field.get_cells_in_range(*self.pos_, r=1) if c.citizen])
+        return occupied
 
     def enterEvent(self, event):
         item = self.citizen or self.landscape or self.style
@@ -74,7 +81,7 @@ class Cell(QPushButton):
 
 class ControlCell(Cell):
     def __init__(self, item):
-        super().__init__(None, Landscape, None, item)
+        super().__init__(None, Landscape, (), item)
         self.item = item
         self.setToolTip(item.__name__)
 
@@ -91,10 +98,10 @@ class Landscape:
     obstacle = False
 
     def interact(self):
-        return NotImplemented()
+        return NotImplemented
 
     def tick(self):
-        return NotImplemented()
+        return NotImplemented
 
 
 class Field(Landscape):
@@ -130,7 +137,20 @@ class Citizen:
         self.next_cell = cell
 
     def tick(self):
-        return NotImplemented()
+        return NotImplemented
+
+    def apply_tick(self):
+        return NotImplemented
+
+    def move(self):
+        # todo: in hurry
+        if self.next_cell == self.cell:
+            return
+
+        self.next_cell.citizen = self
+        self.next_cell.set_style()
+        self.cell.remove_citizen()
+        self.cell = self.next_cell
 
 
 class Fox(Citizen):
@@ -144,8 +164,13 @@ class Fox(Citizen):
 
     def _run(self, cell):
         direction = self.cell.pos_ - cell.pos_
-        direction /= direction
-        self.next_cell = self.cell.field.get_cell_at(self.cell.pos_ + direction)
+        direction.to_vector()
+        cell = self.cell.field.get_cell_at(*(self.cell.pos_ + direction))
+        if not cell.is_occupied(future=True):
+            self.next_cell = cell
+
+    def apply_tick(self):
+        self.move()
 
     def tick(self):
         cells = self.cell.field.get_cells_in_range(*self.cell.pos_, r=2)
@@ -156,6 +181,7 @@ class Fox(Citizen):
                 break
             if isinstance(cell.landscape, Berry):
                 berries.append(cell)
+
         self.hunger -= 1
 
 
@@ -171,3 +197,10 @@ class Robot(Citizen):
 
     def tick(self):
         self.hunger -= 1
+
+        cells = self.cell.field.get_free_cells_in_range(*self.cell.pos_, r=1)
+        self.next_cell = cells[random.randint(0, len(cells) - 1)]
+        self.hunger -= 1
+
+    def apply_tick(self):
+        self.move()

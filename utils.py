@@ -55,18 +55,22 @@ def clear_layout(layout):
             pass
 
 
-class Position(tuple):
+class Position(list):
 
     def __add__(self, other):
         assert len(other) == 2
-        return Position((self[0] - other[0], self[1] - other[1]))
+        return Position((self[0] + other[0], self[1] + other[1]))
 
     def __sub__(self, other):
         assert len(other) == 2
         return Position((self[0] - other[0], self[1] - other[1]))
 
-    def __dir__(self, other):
+    def __floordiv__(self, other):
         assert len(other) == 2
         x = other[0] or 1
         y = other[1] or 1
-        return Position((self[0] / x, self[1] / y))
+        return Position((self[0] // x, self[1] // y))
+
+    def to_vector(self):
+        self[0] = self[0] // (abs(self[0]) or 1)
+        self[1] = self[1] // (abs(self[1]) or 1)

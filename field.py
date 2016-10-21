@@ -59,11 +59,21 @@ class Field(QWidget):
         occupied_cells = [cell.citizen.next_cell for cell in cells if cell.citizen]
         return [c for c in cells if c not in occupied_cells]
 
+    def tick(self):
+        cells_ = self.findChildren(cells.Cell)
+
+        for cell in cells_:
+            cell.tick()
+
+        for cell in cells_:
+            cell.apply_tick()
+
     def __init__(self):
         super().__init__()
 
         Communication.clear_field.connect(self._clear)
         Communication.populate.connect(self._populate)
+        Communication.tick.connect(self.tick)
         self.layout = QGridLayout()
         self.layout.setSpacing(0)
         self.setLayout(self.layout)
