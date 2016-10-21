@@ -11,6 +11,7 @@ class Communication(QObject):
     cell_clicked = pyqtSignal(object)
     tick = pyqtSignal()
     clear_field = pyqtSignal()
+    populate = pyqtSignal()
 
 
 Communication = Communication()

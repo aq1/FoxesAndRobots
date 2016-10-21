@@ -3,7 +3,8 @@ from collections import namedtuple
 
 from PyQt5.QtWidgets import QPushButton
 
-import field
+import config
+import utils
 from communication import Communication
 
 
@@ -13,7 +14,8 @@ class Cell(QPushButton):
         super().__init__(flat=True)
         self.style = namedtuple('Style', ['background_color'])(background_color='FFFFFF')
         self.landscape = landscape
-        self._pos = pos
+        self.pos_ = utils.Position(pos)
+        self.field = field
         self.citizen = citizen
         self.setFixedSize(20, 20)
         self.set_style()
@@ -57,6 +59,8 @@ class Cell(QPushButton):
         if self.citizen:
             self.citizen.tick()
 
+    def is_occupied(self):
+        return self.citizen or not isinstance(self.landscape, Field)
 
     def enterEvent(self, event):
         item = self.citizen or self.landscape or self.style
@@ -109,12 +113,21 @@ class Berry(Landscape):
         print('Berry!')
 
 
+class EnergyCell(Landscape):
+
+    background_color = 'F9DE21'
+
+    def tick(self):
+        print('EnergyCell!')
+
+
 class Citizen:
 
     background_color = '000000'
 
     def __init__(self, cell):
         self.cell = cell
+        self.next_cell = cell
 
     def tick(self):
         return NotImplemented()
@@ -122,19 +135,39 @@ class Citizen:
 
 class Fox(Citizen):
     background_color = 'FC6D26'
-    MAX_HUNGER = 10
+    MAX_HUNGER = 100
 
     def __init__(self, cell):
         super().__init__(cell)
-        self.hunger = self.MAX_HUNGER - random.randint(0, 2)
+        self.hunger = self.MAX_HUNGER - random.randint(0, 5)
         self.known_places = {}
 
+    def _run(self, cell):
+        direction = self.cell.pos_ - cell.pos_
+        direction /= direction
+        self.next_cell = self.cell.field.get_cell_at(self.cell.pos_ + direction)
+
     def tick(self):
-        self.hunger -= 0.1
+        cells = self.cell.field.get_cells_in_range(*self.cell.pos_, r=2)
+        berries = []
+        for cell in cells:
+            if isinstance(cell.citizen, Robot):
+                self._run(cell)
+                break
+            if isinstance(cell.landscape, Berry):
+                berries.append(cell)
+        self.hunger -= 1
 
 
 class Robot(Citizen):
     background_color = '8EB0CC'
+    MAX_HUNGER = 200
+
+    def __init__(self, cell):
+        super().__init__(cell)
+        self.hunger = self.MAX_HUNGER - random.randint(0, 20)
+        # Todo
+        self.hive_mind = None
 
     def tick(self):
-        print('Robot!')
+        self.hunger -= 1

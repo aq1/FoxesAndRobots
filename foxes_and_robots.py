@@ -15,9 +15,11 @@ class Controls(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         layout.addLayout(self._get_cells_control())
-        tick_button = QPushButton('Tick')
-        tick_button.clicked.connect(Communication.tick.emit)
-        layout.addWidget(tick_button)
+
+        for n, f in zip(('Tick', 'Populate'), (Communication.tick.emit, Communication.populate.emit)):
+            b = QPushButton(n)
+            b.clicked.connect(f)
+            layout.addWidget(b)
         layout.addStretch()
 
     def _get_cells_control(self):

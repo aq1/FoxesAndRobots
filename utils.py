@@ -53,3 +53,20 @@ def clear_layout(layout):
             item.widget().setParent(None)
         except AttributeError:
             pass
+
+
+class Position(tuple):
+
+    def __add__(self, other):
+        assert len(other) == 2
+        return Position((self[0] - other[0], self[1] - other[1]))
+
+    def __sub__(self, other):
+        assert len(other) == 2
+        return Position((self[0] - other[0], self[1] - other[1]))
+
+    def __dir__(self, other):
+        assert len(other) == 2
+        x = other[0] or 1
+        y = other[1] or 1
+        return Position((self[0] / x, self[1] / y))
